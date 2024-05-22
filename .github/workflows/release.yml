@@ -3,7 +3,7 @@ name: Create RealmBinary Release
 on:
   push:
     tags:
-      - 'v*-xcode-*'
+      - 'v*-*'
 
 jobs:
   build:
@@ -61,7 +61,7 @@ jobs:
                 ),
                 .binaryTarget(
                     name: "RealmSwift",
-                    url: "https://github.com/realm/realm-swift/releases/download/v${{ env.REALM_VERSION }}/RealmSwift@${{ env.XCODE_VERSION }}.xcframework.zip",
+                    url: "https://github.com/realm/realm-swift/releases/download/v${{ env.REALM_VERSION }}/RealmSwift@${{ env.XCODE_VERSION }}.spm.zip",
                     checksum: "${{ env.REALM_SWIFT_CHECKSUM }}"
                 )
             ]
