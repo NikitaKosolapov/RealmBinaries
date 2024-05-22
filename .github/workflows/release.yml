@@ -92,3 +92,5 @@ jobs:
         asset_path: ./Package.swift
         asset_name: Package.swift
         asset_content_type: text/plain
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
