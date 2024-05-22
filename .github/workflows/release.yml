@@ -76,7 +76,8 @@ jobs:
         release_name: Release ${{ env.REALM_VERSION }} for Xcode ${{ env.XCODE_VERSION }}
         draft: false
         prerelease: false
-        token: ${{ secrets.GH_TOKEN }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Upload Package.swift
       uses: actions/upload-artifact@v2
