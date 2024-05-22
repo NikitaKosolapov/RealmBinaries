@@ -23,12 +23,13 @@ jobs:
         IFS='-' read -r REALM_VERSION XCODE_VERSION <<< "$TAG"
         echo "REALM_VERSION=${REALM_VERSION:1}" >> $GITHUB_ENV
         echo "XCODE_VERSION=$XCODE_VERSION" >> $GITHUB_ENV
+        echo "XCODE_VERSION_SHORT=${XCODE_VERSION#xcode-}" >> $GITHUB_ENV
 
     - name: Download and compute checksums
       id: checksums
       run: |
         chmod +x ./download_and_checksum.sh
-        ./download_and_checksum.sh ${{ env.REALM_VERSION }} ${{ env.XCODE_VERSION }}
+        ./download_and_checksum.sh ${{ env.REALM_VERSION }} ${{ env.XCODE_VERSION_SHORT }}
 
     - name: Create Package.swift
       run: |
@@ -61,7 +62,7 @@ jobs:
                 ),
                 .binaryTarget(
                     name: "RealmSwift",
-                    url: "https://github.com/realm/realm-swift/releases/download/v${{ env.REALM_VERSION }}/RealmSwift@${{ env.XCODE_VERSION }}.spm.zip",
+                    url: "https://github.com/realm/realm-swift/releases/download/v${{ env.REALM_VERSION }}/RealmSwift@${{ env.XCODE_VERSION_SHORT }}.spm.zip",
                     checksum: "${{ env.REALM_SWIFT_CHECKSUM }}"
                 )
             ]
@@ -73,7 +74,7 @@ jobs:
       uses: actions/create-release@v1
       with:
         tag_name: ${{ github.ref }}
-        release_name: Release ${{ env.REALM_VERSION }} for Xcode ${{ env.XCODE_VERSION }}
+        release_name: Release ${{ env.REALM_VERSION }} for Xcode ${{ env.XCODE_VERSION_SHORT }}
         draft: false
         prerelease: false
       env:
