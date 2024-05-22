@@ -1,0 +1,92 @@
+name: Create RealmBinary Release
+
+on:
+  push:
+    tags:
+      - 'v*-xcode-*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Swift
+      uses: fwal/setup-swift@v1
+
+    - name: Extract version info from tag
+      id: extract_version
+      run: |
+        TAG=${GITHUB_REF#refs/tags/}
+        IFS='-' read -r REALM_VERSION XCODE_VERSION <<< "$TAG"
+        echo "REALM_VERSION=${REALM_VERSION:1}" >> $GITHUB_ENV
+        echo "XCODE_VERSION=$XCODE_VERSION" >> $GITHUB_ENV
+
+    - name: Download and compute checksums
+      id: checksums
+      run: |
+        chmod +x ./download_and_checksum.sh
+        ./download_and_checksum.sh ${{ env.REALM_VERSION }} ${{ env.XCODE_VERSION }}
+
+    - name: Create Package.swift
+      run: |
+        cat > Package.swift <<EOL
+        import PackageDescription
+
+        let package = Package(
+            name: "RealmBinary",
+            platforms: [
+                .macOS(.v10_13),
+                .iOS(.v11),
+                .tvOS(.v11),
+                .watchOS(.v4),
+            ],
+            products: [
+                .library(
+                    name: "Realm",
+                    targets: ["Realm"]),
+                .library(
+                    name: "RealmSwift",
+                    targets: ["RealmSwift", "Realm"])
+            ],
+            dependencies: [
+            ],
+            targets: [
+                .binaryTarget(
+                    name: "Realm",
+                    url: "https://github.com/realm/realm-swift/releases/download/v${{ env.REALM_VERSION }}/Realm.xcframework.zip",
+                    checksum: "${{ env.REALM_CHECKSUM }}"
+                ),
+                .binaryTarget(
+                    name: "RealmSwift",
+                    url: "https://github.com/realm/realm-swift/releases/download/v${{ env.REALM_VERSION }}/RealmSwift@${{ env.XCODE_VERSION }}.xcframework.zip",
+                    checksum: "${{ env.REALM_SWIFT_CHECKSUM }}"
+                )
+            ]
+        )
+        EOL
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ env.REALM_VERSION }} for Xcode ${{ env.XCODE_VERSION }}
+        draft: false
+        prerelease: false
+
+    - name: Upload Package.swift
+      uses: actions/upload-artifact@v2
+      with:
+        name: Package.swift
+        path: Package.swift
+
+    - name: Upload to release
+      uses: actions/upload-release-asset@v1
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./Package.swift
+        asset_name: Package.swift
+        asset_content_type: text/plain
